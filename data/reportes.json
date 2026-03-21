@@ -1,0 +1,841 @@
+{
+  "reportes": [
+    {
+      "id": "ventas-institucionales",
+      "name": "Reporte de Uso – Instrucciones Ventas Institucionales",
+      "area": "Ventas Institucionales",
+      "direccion": "Dir. Ventas",
+      "desc": "Monitorea el consumo y nivel de acceso de los usuarios al reporte de Instrucciones para Ventas Institucionales dentro del ecosistema Microsoft 365 / SharePoint de NADRO. Permite identificar cuántos usuarios accedieron, con qué frecuencia, desde qué plataforma y a través de qué método de distribución.",
+      "responsable": "",
+      "estado": "activo",
+      "tags": [
+        "ventas",
+        "uso",
+        "accesos",
+        "sharepoint",
+        "institucional"
+      ],
+      "compat": "1550",
+      "color": "#5C9868",
+      "emoji": "📊",
+      "pdfFile": null,
+      "createdAt": "2026-03-19",
+      "updatedAt": "2026-03-19",
+      "tables": [
+        {
+          "name": "Ejemplo Ale",
+          "type": "import",
+          "cols": 19,
+          "rows": "miles",
+          "desc": "Tabla de hechos principal. Cada fila representa un acceso de usuario al reporte de Instrucciones para Ventas Institucionales."
+        },
+        {
+          "name": "Calendario",
+          "type": "calc",
+          "cols": 18,
+          "rows": "dinámica",
+          "desc": "Dimensión de tiempo generada con DAX CALENDAR(). Rango desde 2024 hasta fecha máxima disponible."
+        },
+        {
+          "name": "TablaMedidas",
+          "type": "empty",
+          "cols": 1,
+          "rows": "—",
+          "desc": "Contenedor de las 14 medidas DAX del modelo. No contiene datos propios."
+        },
+        {
+          "name": "TopN_Selector",
+          "type": "param",
+          "cols": 2,
+          "rows": "5 filas",
+          "desc": "Tabla de parámetro DATATABLE para filtro Top N dinámico (Todos, Top 5/10/15/20)."
+        }
+      ],
+      "relations": [
+        {
+          "fromTable": "Ejemplo Ale",
+          "fromCol": "Fecha",
+          "toTable": "Calendario",
+          "toCol": "Date",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Calendario",
+          "fromCol": "Date",
+          "toTable": "LocalDateTable (interna)",
+          "toCol": "Date",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": false
+        }
+      ],
+      "columns": [
+        {
+          "n": "Archivo Origen",
+          "t": "Texto",
+          "d": "Nombre del archivo CSV fuente del registro"
+        },
+        {
+          "n": "ID Registro",
+          "t": "Entero",
+          "d": "Identificador numérico del registro"
+        },
+        {
+          "n": "Fecha",
+          "t": "Fecha/Hora",
+          "d": "Fecha en que el usuario accedió al reporte"
+        },
+        {
+          "n": "Nombre Método Distribución",
+          "t": "Texto",
+          "d": "Canal de distribución (ej. Content Pack: Grupo RFP)"
+        },
+        {
+          "n": "Nombre Plataforma",
+          "t": "Texto",
+          "d": "Nombre descriptivo de la plataforma de acceso"
+        },
+        {
+          "n": "Nombre del Reporte",
+          "t": "Texto",
+          "d": "Título del reporte visualizado"
+        },
+        {
+          "n": "ID Reporte",
+          "t": "Texto",
+          "d": "GUID único del reporte en Power BI"
+        },
+        {
+          "n": "Nombre Usuario",
+          "t": "Texto",
+          "d": "Nombre del usuario (incluye prefijo 'Sucursal' para puntos de venta)"
+        },
+        {
+          "n": "ID Usuario",
+          "t": "Texto",
+          "d": "GUID único del usuario en Azure AD"
+        },
+        {
+          "n": "Correo Usuario",
+          "t": "Texto",
+          "d": "UPN / correo electrónico corporativo del usuario"
+        },
+        {
+          "n": "Método Distribución",
+          "t": "Texto",
+          "d": "Código del método de distribución"
+        },
+        {
+          "n": "Plataforma",
+          "t": "Texto",
+          "d": "Plataforma de acceso (Web, Mobile...)"
+        },
+        {
+          "n": "Página del Reporte",
+          "t": "Texto",
+          "d": "Nombre de la página dentro del reporte visitada"
+        },
+        {
+          "n": "Total Visitas",
+          "t": "Entero",
+          "d": "Número de visitas del registro"
+        },
+        {
+          "n": "Conteo de Visualizadores",
+          "t": "Entero",
+          "d": "Usuarios únicos que visualizaron"
+        },
+        {
+          "n": "Apellido Usuario",
+          "t": "Texto",
+          "d": "Apellido para usuarios nominales"
+        },
+        {
+          "n": "Nombre Completo",
+          "t": "Calculada",
+          "d": "Elimina el prefijo 'Sucursal ' del nombre de usuario"
+        },
+        {
+          "n": "Es Última Semana",
+          "t": "Calculada",
+          "d": "Etiqueta si la fecha cae en los últimos 7 días del dataset"
+        },
+        {
+          "n": "Última Semana",
+          "t": "Calculada",
+          "d": "Etiqueta si la fecha coincide con la fecha máxima seleccionada"
+        }
+      ],
+      "folders": [
+        {
+          "name": "Accesos",
+          "color": "#5C9868",
+          "measures": [
+            {
+              "n": "Accedieron",
+              "d": "DISTINCTCOUNT de usuarios únicos con el filtro activo"
+            },
+            {
+              "n": "No Accedieron",
+              "d": "Total usuarios únicos del dataset menos los que Accedieron"
+            },
+            {
+              "n": "Accesos_Ultima_Semana",
+              "d": "Usuarios únicos que accedieron en los últimos 7 días (MaxFecha − 6)"
+            },
+            {
+              "n": "No_Accedieron_Ultima_Semana",
+              "d": "Total usuarios menos los que accedieron en el contexto activo"
+            }
+          ]
+        },
+        {
+          "name": "Porcentajes",
+          "color": "#4a7cb5",
+          "measures": [
+            {
+              "n": "Porcentaje Accedieron",
+              "d": "Proporción de Accedieron vs total ignorando filtros de calendario con ALL"
+            },
+            {
+              "n": "%Acceso Visitantes Semanales",
+              "d": "Promedio diario: Accedieron ÷ días distintos del filtro"
+            }
+          ]
+        },
+        {
+          "name": "Visitas",
+          "color": "#7c5cbf",
+          "measures": [
+            {
+              "n": "Total_Visitas_Medida",
+              "d": "Suma del campo Total Visitas"
+            },
+            {
+              "n": "Promedio_Visitas_Semanales",
+              "d": "Total Visitas ÷ semanas distintas del filtro"
+            },
+            {
+              "n": "Ranking_TotalVisitas",
+              "d": "RANKX descendente por Total Visitas con ALLSELECTED"
+            }
+          ]
+        },
+        {
+          "name": "Filtros y Auxiliares",
+          "color": "#c48a1a",
+          "measures": [
+            {
+              "n": "Filtro_Ultima_Semana",
+              "d": "1 si la fecha está en los últimos 7 días del dataset"
+            },
+            {
+              "n": "TopN_Filtro",
+              "d": "Filtra usuarios por slicer TopN_Selector (Total Visitas)"
+            },
+            {
+              "n": "TopN_Filtro_Visitas_Semanales",
+              "d": "Igual a TopN_Filtro pero con Promedio_Visitas_Semanales"
+            },
+            {
+              "n": "UltimasemanaAccesos",
+              "d": "Usuarios únicos en la semana máxima del calendario"
+            },
+            {
+              "n": "UltimasemanaNoAccesos",
+              "d": "Total usuarios menos UltimasemanaAccesos"
+            }
+          ]
+        }
+      ],
+      "source": {
+        "connector": "SharePoint.Files (Microsoft 365 / OneDrive for Business)",
+        "url": "https://mxnadro-my.sharepoint.com/personal/x_data_nadro_com_mx/",
+        "folder": "Documents/Reporte de RVI/",
+        "fileType": "CSV",
+        "mode": "Import",
+        "api": "SharePoint v15",
+        "user": "x_data@nadro.com.mx",
+        "steps": [
+          "Conexión a SharePoint.Files con URL base de OneDrive del usuario de servicio",
+          "Filtro de carpeta: solo archivos de '.../Documents/Reporte de RVI/'",
+          "Exclusión de archivos ocultos (atributo Hidden)",
+          "Combinación de archivos con la función 'Transformar archivo'",
+          "Limpieza de columnas: eliminación de caracteres [ ]",
+          "Conversión de tipos: Fecha (datetime), IDs numéricos (Int64), resto (text)",
+          "Renombrado: ViewsCount → Total visitas, GivenName → GivenName1"
+        ]
+      }
+    },
+    {
+      "id": "reporte-nlinea",
+      "name": "Reporte Nlinea",
+      "area": "Canal Nlinea",
+      "direccion": "Dir. Ventas",
+      "desc": "Monitorea el desempeño de ventas del canal N-Línea (comercio digital) de NADRO. Permite analizar ventas facturadas, piezas, clientes activos, participación del canal y comparativos año/mes actuales vs anteriores, con datos extraídos en tiempo real desde Databricks (Azure).",
+      "responsable": "",
+      "estado": "activo",
+      "tags": [
+        "ventas",
+        "nlinea",
+        "databricks",
+        "azure",
+        "digital"
+      ],
+      "compat": "1567",
+      "color": "#5C9868",
+      "emoji": "🛒",
+      "pdfFile": "reporte-nlinea.pdf",
+      "createdAt": "2026-03-19",
+      "updatedAt": "2026-03-19",
+      "tables": [
+        {
+          "name": "Data_Nlinea",
+          "type": "import",
+          "cols": 36,
+          "rows": "millones",
+          "desc": "Tabla de hechos principal. Transacciones de facturación del canal N-Línea (USAGE_IND=23) desde SAP vía Databricks."
+        },
+        {
+          "name": "catalogo_clientes",
+          "type": "import",
+          "cols": 60,
+          "rows": "miles",
+          "desc": "Dimensión de clientes con jerarquía comercial (nodo, segmento, región, director, responsable)."
+        },
+        {
+          "name": "material_gold",
+          "type": "import",
+          "cols": 53,
+          "rows": "miles",
+          "desc": "Dimensión de materiales con atributos farmacéuticos, precios, costos, margen bruto, familia, laboratorio."
+        },
+        {
+          "name": "sucursales",
+          "type": "import",
+          "cols": 21,
+          "rows": "decenas",
+          "desc": "Dimensión de plantas/sucursales NADRO con región, responsable y coordenadas."
+        },
+        {
+          "name": "Calendario",
+          "type": "calc",
+          "cols": 14,
+          "rows": "dinámica",
+          "desc": "Dimensión de tiempo calculada en DAX. Incluye índices relativos (día/mes/año vs hoy)."
+        },
+        {
+          "name": "Totales_mesuales",
+          "type": "import",
+          "cols": 9,
+          "rows": "miles",
+          "desc": "Totales mensuales consolidados por cliente. Usada para calcular participación del canal."
+        },
+        {
+          "name": "Dax_table",
+          "type": "empty",
+          "cols": 1,
+          "rows": "—",
+          "desc": "Contenedor de las 49 medidas DAX del modelo."
+        },
+        {
+          "name": "Tabla Estatus",
+          "type": "param",
+          "cols": 2,
+          "rows": "7",
+          "desc": "Parámetro con los posibles estatus de cliente (Activo, En Riesgo, Inactividad-30/60/90, Inactivo)."
+        },
+        {
+          "name": "Cdistr",
+          "type": "param",
+          "cols": 2,
+          "rows": "pocos",
+          "desc": "Catálogo de canales de distribución (código + descripción)."
+        },
+        {
+          "name": "Tipos de participacion",
+          "type": "param",
+          "cols": 3,
+          "rows": "pocos",
+          "desc": "Parámetro para alternar el tipo de participación (Ventas, Piezas, Clientes) en visuales dinámicos."
+        },
+        {
+          "name": "V-P-C",
+          "type": "param",
+          "cols": 3,
+          "rows": "pocos",
+          "desc": "Tabla auxiliar de selector Ventas/Piezas/Clientes."
+        },
+        {
+          "name": "V-P-C Seg",
+          "type": "param",
+          "cols": 3,
+          "rows": "pocos",
+          "desc": "Variante del selector V-P-C con segmentación."
+        },
+        {
+          "name": "V-Participación",
+          "type": "param",
+          "cols": 3,
+          "rows": "pocos",
+          "desc": "Tabla auxiliar para el visual de participación de ventas."
+        },
+        {
+          "name": "Dimensiones tabla",
+          "type": "param",
+          "cols": 3,
+          "rows": "pocos",
+          "desc": "Tabla auxiliar de parámetros para control de dimensiones visuales."
+        },
+        {
+          "name": "Totales",
+          "type": "param",
+          "cols": 3,
+          "rows": "pocos",
+          "desc": "Tabla auxiliar de selector de totales."
+        }
+      ],
+      "relations": [
+        {
+          "fromTable": "Data_Nlinea",
+          "fromCol": "BILL_DATE",
+          "toTable": "Calendario",
+          "toCol": "Date",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Data_Nlinea",
+          "fromCol": "MATERIAL",
+          "toTable": "material_gold",
+          "toCol": "MATERIAL",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Data_Nlinea",
+          "fromCol": "SHIP_TO",
+          "toTable": "catalogo_clientes",
+          "toCol": "bpartner relacion",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Data_Nlinea",
+          "fromCol": "PLANT",
+          "toTable": "sucursales",
+          "toCol": "PLANT_ID",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Data_Nlinea",
+          "fromCol": "DISTR_CHAN",
+          "toTable": "Cdistr",
+          "toCol": "DistrChanCod",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Totales_mesuales",
+          "fromCol": "fecha_mes",
+          "toTable": "Calendario",
+          "toCol": "Date",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Totales_mesuales",
+          "fromCol": "ship_to",
+          "toTable": "catalogo_clientes",
+          "toCol": "bpartner relacion",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": true
+        },
+        {
+          "fromTable": "Calendario",
+          "fromCol": "Date",
+          "toTable": "LocalDateTable (interna)",
+          "toCol": "Date",
+          "card": "*:1",
+          "dir": "OneDirection",
+          "active": false
+        }
+      ],
+      "columns": [
+        {
+          "n": "BILL_DATE",
+          "t": "Fecha/Hora",
+          "d": "Fecha de facturación (clave para relación con Calendario)"
+        },
+        {
+          "n": "BILL_NUM",
+          "t": "Entero",
+          "d": "Número de documento de factura"
+        },
+        {
+          "n": "BILL_ITEM",
+          "t": "Entero",
+          "d": "Posición del ítem en la factura"
+        },
+        {
+          "n": "MATERIAL",
+          "t": "Entero",
+          "d": "Código de material SAP (clave para relación con material_gold)"
+        },
+        {
+          "n": "SOLD_TO",
+          "t": "Entero",
+          "d": "Código del cliente solicitante"
+        },
+        {
+          "n": "SHIP_TO",
+          "t": "Entero",
+          "d": "Código del destinatario de mercancía (clave para relación con catalogo_clientes)"
+        },
+        {
+          "n": "PLANT",
+          "t": "Texto",
+          "d": "Código de planta/sucursal (clave para relación con sucursales)"
+        },
+        {
+          "n": "DISTR_CHAN",
+          "t": "Texto",
+          "d": "Canal de distribución (clave para relación con Cdistr)"
+        },
+        {
+          "n": "SALES_DIST",
+          "t": "Texto",
+          "d": "Distrito de ventas"
+        },
+        {
+          "n": "SALES_GRP",
+          "t": "Texto",
+          "d": "Grupo de ventas"
+        },
+        {
+          "n": "SALES_OFF",
+          "t": "Texto",
+          "d": "Oficina de ventas"
+        },
+        {
+          "n": "DOC_TYPE",
+          "t": "Texto",
+          "d": "Tipo de documento SAP"
+        },
+        {
+          "n": "BILL_TYPE",
+          "t": "Texto",
+          "d": "Tipo de factura"
+        },
+        {
+          "n": "USAGE_IND",
+          "t": "Texto",
+          "d": "Indicador de uso (filtrado a valor 23 = N-Línea en la fuente)"
+        },
+        {
+          "n": "PIEZAS",
+          "t": "Entero",
+          "d": "Cantidad de piezas facturadas"
+        },
+        {
+          "n": "VENTA_FACTURADA",
+          "t": "Decimal",
+          "d": "Importe de venta facturada (métrica principal)"
+        },
+        {
+          "n": "VENTA_FARMACIA",
+          "t": "Decimal",
+          "d": "Venta valorada a precio de farmacia"
+        },
+        {
+          "n": "DESCUENTOS",
+          "t": "Decimal",
+          "d": "Total de descuentos aplicados"
+        },
+        {
+          "n": "IVA",
+          "t": "Decimal",
+          "d": "Impuesto al Valor Agregado"
+        },
+        {
+          "n": "IEPS",
+          "t": "Decimal",
+          "d": "Impuesto Especial sobre Producción y Servicios"
+        },
+        {
+          "n": "SUBTOTAL_NETO",
+          "t": "Decimal",
+          "d": "Subtotal neto (venta − descuentos)"
+        },
+        {
+          "n": "UPD_DATE",
+          "t": "Fecha/Hora",
+          "d": "Fecha de última actualización del registro"
+        },
+        {
+          "n": "month",
+          "t": "Entero",
+          "d": "Número de mes extraído de la fecha"
+        },
+        {
+          "n": "year",
+          "t": "Entero",
+          "d": "Año extraído de la fecha"
+        },
+        {
+          "n": "Cat (calc.)",
+          "t": "Calculada",
+          "d": "Categoría del cliente: 'Mi Farmacia' o descripción del canal"
+        }
+      ],
+      "folders": [
+        {
+          "name": "Ventas",
+          "color": "#5C9868",
+          "measures": [
+            {
+              "n": "total_Venta_nlinea",
+              "d": "Suma total de VENTA_FACTURADA del canal N-Línea"
+            },
+            {
+              "n": "Venta_anioactualnlinea",
+              "d": "Venta N-Línea del año actual (Índice año vs hoy = 0)"
+            },
+            {
+              "n": "Venta_anioanterior",
+              "d": "Venta N-Línea del año anterior (Índice año vs hoy = -1)"
+            },
+            {
+              "n": "venta_mesactual",
+              "d": "Venta del mes actual (Índice mes vs hoy = 0)"
+            },
+            {
+              "n": "venta_mesanterior",
+              "d": "Venta del mes anterior (Índice mes vs hoy = -1)"
+            },
+            {
+              "n": "venta_mesactual_anioanteior",
+              "d": "Venta del mismo mes del año anterior (Índice mes = -12)"
+            },
+            {
+              "n": "total_Venta_anioactual",
+              "d": "Venta total año actual desde Totales_mesuales"
+            },
+            {
+              "n": "Venta dia anterior",
+              "d": "Venta del día anterior (Índice día vs hoy = -1)"
+            },
+            {
+              "n": "venta_nlinea independiente",
+              "d": "Venta año actual de clientes Independientes"
+            },
+            {
+              "n": "venta_nlinea mi farmacia",
+              "d": "Venta año actual del segmento Mi Farmacia"
+            },
+            {
+              "n": "Venta_anioanterior ytd",
+              "d": "Venta N-Línea YTD del mismo período del año anterior"
+            }
+          ]
+        },
+        {
+          "name": "Piezas",
+          "color": "#4a7cb5",
+          "measures": [
+            {
+              "n": "Piezas total",
+              "d": "Suma total de piezas facturadas"
+            },
+            {
+              "n": "piezas_anioactualnlinea",
+              "d": "Piezas N-Línea del año actual"
+            },
+            {
+              "n": "piezas_Venta_anioactual",
+              "d": "Piezas totales del año actual desde Totales_mesuales"
+            },
+            {
+              "n": "piezas_mesactual",
+              "d": "Piezas del mes actual"
+            },
+            {
+              "n": "piezas_anioanterior ytd",
+              "d": "Piezas YTD del mismo período del año anterior"
+            }
+          ]
+        },
+        {
+          "name": "Clientes",
+          "color": "#7c5cbf",
+          "measures": [
+            {
+              "n": "Num_clientes",
+              "d": "Conteo de clientes únicos (DISTINCTCOUNT de SHIP_TO)"
+            },
+            {
+              "n": "Num_clientes_anioact",
+              "d": "Clientes únicos del año actual"
+            },
+            {
+              "n": "clientes_anioactualnlinea",
+              "d": "Clientes N-Línea del año actual"
+            },
+            {
+              "n": "clientes dia anterior",
+              "d": "Clientes únicos del día anterior"
+            },
+            {
+              "n": "clientes_mesactual",
+              "d": "Clientes únicos del mes actual"
+            },
+            {
+              "n": "Num_clientes > 90%",
+              "d": "Clientes con Participación Nlinea > 90%"
+            },
+            {
+              "n": "clientes_anioanterior ytd",
+              "d": "Clientes YTD del mismo período del año anterior"
+            }
+          ]
+        },
+        {
+          "name": "Participación",
+          "color": "#c48a1a",
+          "measures": [
+            {
+              "n": "Participación Nlinea",
+              "d": "% Ventas N-Línea vs total año actual"
+            },
+            {
+              "n": "Participación Nlinea  piezas",
+              "d": "% Piezas N-Línea vs total año actual"
+            },
+            {
+              "n": "Participación Nlinea clientes",
+              "d": "% Clientes N-Línea vs total año actual"
+            },
+            {
+              "n": "target_tacho",
+              "d": "Valor fijo = 1 (100%), usado como objetivo en velocímetro"
+            }
+          ]
+        },
+        {
+          "name": "Estatus Cliente",
+          "color": "#b85c44",
+          "measures": [
+            {
+              "n": "Días desde última venta",
+              "d": "DATEDIFF entre la última fecha de venta y TODAY()"
+            },
+            {
+              "n": "PromedioDiarioUltimos24Dias",
+              "d": "Promedio diario de venta en los últimos 24 días"
+            },
+            {
+              "n": "Promedio General (Compra Diaria)",
+              "d": "Venta total ÷ días desde primera compra hasta hoy"
+            },
+            {
+              "n": "Estatus Cliente",
+              "d": "SWITCH: Activo (≤5d), En Riesgo (6-10d), Inactividad-30/60/90, Inactivo (>90d)"
+            },
+            {
+              "n": "Conteo Clientes por Estatus",
+              "d": "DISTINCTCOUNT de clientes filtrados por estatus seleccionado"
+            }
+          ]
+        },
+        {
+          "name": "Tickets y Promedios",
+          "color": "#5C9868",
+          "measures": [
+            {
+              "n": "ticket promedio mensual",
+              "d": "Venta total ÷ número de clientes únicos"
+            },
+            {
+              "n": "ticket promedio piezas mensual",
+              "d": "Piezas totales ÷ número de clientes únicos"
+            }
+          ]
+        },
+        {
+          "name": "Formato Dinámico",
+          "color": "#6a8c6e",
+          "measures": [
+            {
+              "n": "venta total  dinamico",
+              "d": "Venta total N-Línea formateada: $X.XX mil M / M / mil según magnitud"
+            },
+            {
+              "n": "venta mes actual dinamico",
+              "d": "Venta mes actual formateada dinámicamente"
+            },
+            {
+              "n": "venta anio actual dinamico",
+              "d": "Venta año actual N-Línea formateada dinámicamente"
+            },
+            {
+              "n": "venta anio anterior dinamico",
+              "d": "Venta año anterior formateada dinámicamente"
+            },
+            {
+              "n": "venta ytd dinamico",
+              "d": "Venta YTD año anterior formateada dinámicamente"
+            },
+            {
+              "n": "Venta total format",
+              "d": "Venta total año actual en formato $#,##0"
+            },
+            {
+              "n": "total venta nlinea format",
+              "d": "Venta N-Línea año actual en formato $#,##0"
+            },
+            {
+              "n": "Venta dia anterior format",
+              "d": "Venta día anterior en formato $#,##0"
+            },
+            {
+              "n": "importe dinamico",
+              "d": "⚠️ Error semántico: referencia a tabla 'Pedido' inexistente"
+            },
+            {
+              "n": "Presupuesto format",
+              "d": "⚠️ Error semántico: referencia a medida 'Presupuesto Mensual' inexistente"
+            }
+          ]
+        }
+      ],
+      "source": {
+        "connector": "Azure Databricks (Lakehouse / Delta Lake)",
+        "url": "adb-3312246081621256.16.azuredatabricks.net",
+        "folder": "/sql/1.0/warehouses/afd2f6490278788c",
+        "fileType": "Delta Table (SQL nativo)",
+        "mode": "Import",
+        "api": "Databricks SQL Warehouse · Catalog: nadro_comercial",
+        "user": "Conexión OAuth / token Databricks",
+        "steps": [
+          "Conexión al workspace Azure Databricks vía Databricks.Catalogs en Power Query",
+          "Acceso al catálogo nadro_comercial, base de datos silver",
+          "Ejecución de SQL nativo: SELECT * FROM nadro_comercial.silver.facturas_prd_silver WHERE USAGE_IND = '23'",
+          "Filtro en origen: USAGE_IND = '23' corresponde exclusivamente al canal N-Línea",
+          "Carga completa de la tabla resultante en modo Import al modelo Power BI",
+          "Tablas dimensión (catalogo_clientes, material_gold, sucursales) también provienen de Databricks",
+          "Totales_mesuales carga una tabla agregada mensual desde la misma plataforma"
+        ]
+      }
+    }
+  ]
+}
