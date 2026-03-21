@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+
+/* ── Design System Components ── */
+@layer components {
+  .form-input {
+    @apply w-full bg-surface-100 border border-surface-200 rounded-xl px-3 py-2.5
+           text-ink-900 text-[13px] font-sans outline-none transition-all duration-200;
+    @apply focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-xl text-[13px] font-semibold cursor-pointer
+           transition-all duration-200 border border-surface-200 bg-white text-ink-700
+           inline-flex items-center gap-2 shadow-soft;
+    @apply hover:bg-surface-50 hover:shadow-card hover:border-surface-300;
+    @apply active:scale-[0.98];
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-xl text-[13px] font-semibold cursor-pointer
+           transition-all duration-200 border-0 text-white
+           inline-flex items-center gap-2 shadow-soft;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    @apply hover:shadow-glow hover:brightness-110;
+    @apply active:scale-[0.98];
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-surface-200/60 shadow-soft
+           transition-all duration-300;
+    @apply hover:shadow-card;
+  }
+
+  .card-header {
+    @apply px-5 py-3.5 border-b border-surface-100;
+  }
+
+  .card-body {
+    @apply p-5;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium
+           text-ink-500 cursor-pointer transition-all duration-200;
+    @apply hover:bg-brand-50 hover:text-brand-700;
+  }
+
+  .sidebar-item-active {
+    @apply bg-brand-50 text-brand-700 shadow-soft;
+  }
+}
+
+/* ── Print ── */
+@media print {
+  @page { size: A4; margin: 16mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}

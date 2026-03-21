@@ -59,6 +59,18 @@ def init_db():
             details TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            actor_id INTEGER REFERENCES users(id),
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL DEFAULT '',
+            reporte_id TEXT,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
     """)
     conn.commit()
     conn.close()
@@ -136,6 +148,13 @@ def update_user_password(user_id: int, new_password: str) -> bool:
     conn.commit()
     conn.close()
     return True
+
+def delete_user(user_id: int) -> bool:
+    conn = get_db()
+    cursor = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
 
 def update_last_login(user_id: int):
     conn = get_db()
@@ -310,6 +329,67 @@ def get_stats() -> Dict:
         e = r.get('estado', 'activo')
         by_est[e] = by_est.get(e, 0) + 1
     return {"total_reportes": len(reportes), "total_areas": len(areas), "by_direccion": by_dir, "by_estado": by_est}
+
+# ── Notifications ─────────────────────────────────────────────────
+def create_notification(user_id: int, type: str, title: str, message: str, reporte_id: str = None, actor_id: int = None):
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO notifications (user_id, actor_id, type, title, message, reporte_id) VALUES (?, ?, ?, ?, ?, ?)",
+        (user_id, actor_id, type, title, message, reporte_id)
+    )
+    conn.commit()
+    conn.close()
+
+def notify_all_admins(type: str, title: str, message: str, reporte_id: str = None, actor_id: int = None, exclude_user_id: int = None):
+    """Send notification to all admin users (optionally excluding someone)."""
+    conn = get_db()
+    admins = conn.execute("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").fetchall()
+    for admin in admins:
+        if exclude_user_id and admin['id'] == exclude_user_id:
+            continue
+        conn.execute(
+            "INSERT INTO notifications (user_id, actor_id, type, title, message, reporte_id) VALUES (?, ?, ?, ?, ?, ?)",
+            (admin['id'], actor_id, type, title, message, reporte_id)
+        )
+    conn.commit()
+    conn.close()
+
+def get_notifications(user_id: int, limit: int = 50) -> List[Dict]:
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT n.*, u.name as actor_name, u.email as actor_email, u.role as actor_role
+        FROM notifications n
+        LEFT JOIN users u ON n.actor_id = u.id
+        WHERE n.user_id = ?
+        ORDER BY n.created_at DESC LIMIT ?
+    """, (user_id, limit)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_unread_count(user_id: int) -> int:
+    conn = get_db()
+    row = conn.execute(
+        "SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND is_read = 0",
+        (user_id,)
+    ).fetchone()
+    conn.close()
+    return row['c']
+
+def mark_notification_read(notif_id: int, user_id: int) -> bool:
+    conn = get_db()
+    cursor = conn.execute(
+        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
+        (notif_id, user_id)
+    )
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
+
+def mark_all_notifications_read(user_id: int):
+    conn = get_db()
+    conn.execute("UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0", (user_id,))
+    conn.commit()
+    conn.close()
 
 # ── Audit Log ────────────────────────────────────────────────────
 def log_action(user_id: int, action: str, target_type: str = None, target_id: str = None, details: str = None):

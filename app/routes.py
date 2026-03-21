@@ -75,6 +75,15 @@ def reset_password(user_id: int, payload: PasswordChange, admin=Depends(require_
     db.update_user_password(user_id, payload.password)
     return {"ok": True, "message": "Contraseña reseteada"}
 
+@router.delete("/users/{user_id}", summary="Eliminar usuario")
+def delete_user_endpoint(user_id: int, admin=Depends(require_admin)):
+    if admin["id"] == user_id:
+        raise HTTPException(400, "No puedes eliminarte a ti mismo")
+    result = db.delete_user(user_id)
+    if not result:
+        raise HTTPException(404, "Usuario no encontrado")
+    return {"ok": True, "message": "Usuario eliminado"}
+
 # ═══ JSON UPLOAD ═══════════════════════════════════════════════
 @router.post("/upload-json", summary="Subir documentación completa vía JSON")
 def upload_json(payload: dict = Body(...), user=Depends(get_current_user)):
@@ -103,10 +112,24 @@ def upload_json(payload: dict = Body(...), user=Depends(get_current_user)):
     if existing:
         result = db.update_reporte(rid, payload)
         db.log_action(user['id'], 'update_json', 'reporte', rid)
+        rname = payload.get("name", rid)
+        db.notify_all_admins('reporte_updated', 'Reporte actualizado',
+            f'{user["name"]} actualizo "{rname}" via JSON.', rid, actor_id=user['id'])
+        if user['role'] != 'admin':
+            db.create_notification(user['id'], 'reporte_updated', 'Reporte actualizado',
+                f'Actualizaste "{rname}" via JSON.', rid, actor_id=user['id'])
         return {"ok": True, "message": f"Reporte '{rid}' actualizado", "reporte": result, "action": "updated"}
     else:
         result = db.create_reporte(payload, user_id=user['id'])
         db.log_action(user['id'], 'create_json', 'reporte', rid)
+        rname = payload.get("name", rid)
+        tables_count = len(payload.get("tables", []))
+        measures_count = sum(len(f.get("measures", [])) for f in payload.get("folders", []))
+        db.notify_all_admins('reporte_created', 'Nuevo reporte subido',
+            f'{user["name"]} subio "{rname}" ({payload.get("area","")}) con {tables_count} tablas y {measures_count} medidas.', rid, actor_id=user['id'])
+        if user['role'] != 'admin':
+            db.create_notification(user['id'], 'reporte_created', 'Nuevo reporte creado',
+                f'Subiste "{rname}" con {tables_count} tablas y {measures_count} medidas.', rid, actor_id=user['id'])
         return {"ok": True, "message": f"Reporte '{rid}' creado", "reporte": result, "action": "created"}
 
 @router.post("/validate-json", summary="Validar JSON sin guardar")
@@ -159,6 +182,11 @@ def create_reporte(payload: ReporteCreate, user=Depends(get_current_user)):
     d = {"id": rid, **payload.model_dump(), "tables":[],"relations":[],"columns":[],"folders":[],"source":None,"pdfFile":None}
     created = db.create_reporte(d, user_id=user['id'])
     db.log_action(user['id'], 'create_reporte', 'reporte', rid)
+    db.notify_all_admins('reporte_created', 'Nuevo reporte creado',
+        f'{user["name"]} creo el reporte "{payload.name}" en {payload.area}.', rid, actor_id=user['id'])
+    if user['role'] != 'admin':
+        db.create_notification(user['id'], 'reporte_created', 'Nuevo reporte creado',
+            f'Creaste el reporte "{payload.name}" en {payload.area}.', rid, actor_id=user['id'])
     return created
 
 @router.put("/reportes/{reporte_id}", response_model=Reporte)
@@ -219,6 +247,23 @@ def export_pdf(reporte_id: str):
     pdf = generate_report_pdf_with_attachment(r, PDFS_DIR)
     return Response(content=pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{reporte_id}-resumen.pdf"'})
+
+# ═══ NOTIFICATIONS ═════════════════════════════════════════════
+@router.get("/notifications")
+def get_notifications(user=Depends(get_current_user)):
+    items = db.get_notifications(user['id'])
+    unread = db.get_unread_count(user['id'])
+    return {"items": items, "unread": unread}
+
+@router.put("/notifications/read-all")
+def mark_all_read(user=Depends(get_current_user)):
+    db.mark_all_notifications_read(user['id'])
+    return {"ok": True}
+
+@router.put("/notifications/{notif_id}/read")
+def mark_read(notif_id: int, user=Depends(get_current_user)):
+    db.mark_notification_read(notif_id, user['id'])
+    return {"ok": True}
 
 # ═══ AUDIT LOG ═════════════════════════════════════════════════
 @router.get("/audit-log")
