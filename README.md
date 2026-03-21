@@ -1,126 +1,196 @@
-# PBI Docs — NADRO
-## Biblioteca de documentación de reportes Power BI
+# PBI Docs — Plataforma de Documentacion de Reportes
+
+Sistema interno de gestion y documentacion de modelos semanticos Power BI. Permite centralizar, organizar y consultar la metadata de todos los reportes de la organizacion desde una interfaz administrativa segura.
 
 ---
 
-## 📁 Estructura del proyecto
+## Arquitectura del Proyecto
 
 ```
-PBI-Docs/
-├── main.py                 ← Servidor FastAPI (punto de entrada)
-├── requirements.txt        ← Dependencias Python
-├── start.bat               ← Doble clic para iniciar (Windows)
+BI-Hub/
+├── main.py                     # Servidor FastAPI (punto de entrada)
+├── requirements.txt            # Dependencias Python
+├── start.bat                   # Inicio rapido (Windows)
 │
 ├── app/
-│   ├── routes.py           ← Todos los endpoints de la API
-│   ├── models.py           ← Modelos de datos (Pydantic)
-│   └── storage.py          ← Lógica de lectura/escritura JSON
+│   ├── auth.py                 # Autenticacion JWT y control de acceso
+│   ├── routes.py               # Endpoints de la API REST
+│   ├── models.py               # Modelos de datos (Pydantic)
+│   ├── database.py             # Capa de base de datos (SQLite)
+│   └── pdf_export.py           # Generacion de reportes PDF ejecutivos
 │
 ├── data/
-│   ├── reportes.json       ← Base de datos de reportes
-│   └── areas.json          ← Catálogo de áreas/direcciones
+│   └── pbidocs.db              # Base de datos SQLite
 │
-├── pdfs/                   ← PDFs subidos desde Power BI
+├── pdfs/                       # Archivos PDF adjuntos
 │
-└── static/
-    ├── index.html          ← Frontend principal
-    ├── css/styles.css      ← Estilos
-    └── js/app.js           ← Lógica del frontend
+├── static/
+│   └── img/                    # Recursos graficos
+│
+└── frontend/                   # Aplicacion React (Vite + TypeScript)
+    ├── src/
+    │   ├── components/         # Componentes de interfaz
+    │   ├── store/              # Estado global de la aplicacion
+    │   ├── api/                # Cliente HTTP
+    │   └── types/              # Definiciones de tipos
+    ├── tailwind.config.js      # Sistema de diseno
+    └── vite.config.ts          # Configuracion del bundler
 ```
 
 ---
 
-## 🚀 Cómo iniciar
+## Requisitos Previos
 
-### Opción A — Doble clic (más fácil)
-1. Abre la carpeta `PBI-Docs` en tu escritorio
-2. Haz doble clic en `start.bat`
-3. El servidor se inicia y abre el navegador automáticamente
+- Python 3.10 o superior
+- Node.js 18 o superior
+- Windows 10/11
 
-### Opción B — Terminal manual
+---
+
+## Instalacion y Puesta en Marcha
+
+### Backend
+
 ```bash
-cd Desktop/PBI-Docs
-
-# Primera vez: crear entorno e instalar dependencias
+# Crear entorno virtual e instalar dependencias
 python -m venv venv
-venv\Scripts\activate          # Windows
+venv\Scripts\activate
 pip install -r requirements.txt
 
-# Iniciar servidor
+# Iniciar servidor (puerto 8000)
 python -m uvicorn main:app --reload --port 8000
 ```
 
-Luego abre: **http://localhost:8000**
+### Frontend (modo desarrollo)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+El frontend se ejecuta en `http://localhost:5173` y se conecta al backend via proxy.
+
+### Inicio Rapido (Windows)
+
+Ejecutar `start.bat` para iniciar backend y frontend simultaneamente.
 
 ---
 
-## 🔌 API Endpoints
+## Funcionalidades Principales
 
-| Método | Ruta | Descripción |
+### Gestion de Reportes
+- Registro manual de reportes con datos basicos (nombre, area, direccion, responsable)
+- Importacion de documentacion completa via JSON (tablas, columnas, medidas, relaciones, fuente de datos)
+- Edicion y eliminacion de reportes existentes
+- Busqueda y filtrado por area, direccion, estado y tags
+
+### Documentacion del Modelo Semantico
+- Inventario de tablas con tipo, cantidad de columnas y filas
+- Catalogo de columnas con tipo de dato y descripcion
+- Medidas DAX organizadas por carpeta
+- Relaciones entre tablas (cardinalidad, direccion, estado)
+- Fuente de datos: conector, endpoint, modo de carga, pasos de transformacion
+
+### Exportacion PDF
+- Generacion de resumen ejecutivo en formato PDF
+- Portada con branding institucional
+- Seccion de metricas, tablas, medidas y fuente de datos
+- Listo para presentacion a directivos
+
+### Sistema de Usuarios
+- Autenticacion mediante JWT
+- Roles: **admin** (gestion completa) y **editor** (gestion limitada a sus reportes)
+- Administracion de usuarios: crear, editar, cambiar contrasena, activar/desactivar, eliminar
+
+### Notificaciones
+- Notificaciones en tiempo real al crear o actualizar reportes
+- Panel de notificaciones con filtros por tipo, fecha y estado de lectura
+- Registro de quien realizo cada accion
+
+---
+
+## Endpoints de la API
+
+### Autenticacion
+
+| Metodo | Ruta | Descripcion |
 |--------|------|-------------|
-| GET | `/api/reportes` | Lista todos los reportes |
-| GET | `/api/reportes/{id}` | Obtiene un reporte |
-| POST | `/api/reportes` | Crea un reporte nuevo |
-| PUT | `/api/reportes/{id}` | Actualiza un reporte |
-| DELETE | `/api/reportes/{id}` | Elimina un reporte |
-| POST | `/api/reportes/{id}/pdf` | Sube el PDF del reporte |
-| DELETE | `/api/reportes/{id}/pdf` | Elimina el PDF |
-| GET | `/api/areas` | Lista todas las áreas |
-| POST | `/api/areas` | Crea un área |
-| PUT | `/api/areas/{id}` | Actualiza un área |
-| DELETE | `/api/areas/{id}` | Elimina un área |
-| GET | `/api/buscar?q=ventas` | Búsqueda por texto |
-| GET | `/api/buscar?direccion=Dir.+Ventas` | Filtrar por dirección |
-| GET | `/api/buscar?area=Canal+Nlinea` | Filtrar por área |
-| GET | `/api/buscar?estado=activo` | Filtrar por estado |
-| GET | `/api/stats` | Estadísticas generales |
-| GET | `/docs` | Swagger UI (documentación interactiva de la API) |
+| POST | `/api/auth/login` | Inicio de sesion |
+| GET | `/api/auth/me` | Perfil del usuario autenticado |
+| PUT | `/api/auth/password` | Cambio de contrasena propia |
+
+### Reportes
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/api/reportes` | Listar todos los reportes |
+| GET | `/api/reportes/{id}` | Consultar un reporte |
+| POST | `/api/reportes` | Crear reporte (manual) |
+| POST | `/api/upload-json` | Crear o actualizar reporte via JSON |
+| PUT | `/api/reportes/{id}` | Actualizar reporte |
+| DELETE | `/api/reportes/{id}` | Eliminar reporte (admin) |
+
+### PDF
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| POST | `/api/reportes/{id}/pdf` | Adjuntar PDF |
+| DELETE | `/api/reportes/{id}/pdf` | Eliminar PDF adjunto |
+| GET | `/api/reportes/{id}/export-pdf` | Exportar resumen ejecutivo |
+
+### Usuarios (admin)
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/api/users` | Listar usuarios |
+| POST | `/api/users` | Crear usuario |
+| PUT | `/api/users/{id}` | Actualizar usuario |
+| PUT | `/api/users/{id}/password` | Resetear contrasena |
+| DELETE | `/api/users/{id}` | Eliminar usuario |
+
+### Notificaciones
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/api/notifications` | Obtener notificaciones del usuario |
+| PUT | `/api/notifications/read-all` | Marcar todas como leidas |
+| PUT | `/api/notifications/{id}/read` | Marcar una como leida |
+
+### Otros
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/api/buscar` | Busqueda con filtros |
+| GET | `/api/stats` | Estadisticas generales |
+| GET | `/api/areas` | Listar areas |
+| GET | `/api/audit-log` | Registro de auditoria (admin) |
+| GET | `/docs` | Documentacion interactiva de la API (Swagger) |
 
 ---
 
-## 📋 Cómo agregar un nuevo reporte
+## Seguridad
 
-1. Abre la app en http://localhost:8000
-2. Clic en **"+ Nueva documentación"** en el sidebar
-3. Llena el formulario con nombre, dirección, área, etc.
-4. Clic en **Crear**
-5. El reporte aparece en el sidebar — luego puedes editar tablas, medidas y fuente directamente en `data/reportes.json`
-
----
-
-## 🔍 Búsqueda por área/dirección
-
-Desde el sidebar, usa los chips de **Filtrar por dirección** para ver solo los reportes de una dirección específica.
-
-También puedes buscar desde la API:
-```
-GET /api/buscar?direccion=Dir.+Ventas
-GET /api/buscar?q=nlinea
-GET /api/buscar?area=Canal+Nlinea&estado=activo
-```
+- Todas las rutas de la API requieren autenticacion via token JWT (excepto login)
+- Las contrasenas se almacenan con hash PBKDF2-SHA256 con salt aleatorio
+- Los tokens tienen vigencia de 12 horas
+- Las acciones administrativas requieren rol de administrador
+- Se mantiene un registro de auditoria de todas las operaciones
 
 ---
 
-## 📄 Subir PDF de un reporte
+## Stack Tecnologico
 
-1. Abre un reporte en la app
-2. Ve a la pestaña **Vista PDF**
-3. Arrastra o selecciona el PDF exportado desde Power BI Desktop
-4. El PDF queda guardado en la carpeta `/pdfs/` y se muestra embebido
-
----
-
-## ➕ Agregar más reportes (con Claude)
-
-Para documentar un nuevo reporte Power BI:
-1. Conéctate al reporte desde Claude con el MCP de Power BI
-2. Pídele: *"Genera la documentación completa de este reporte y agrégala a la app"*
-3. Claude extrae tablas, columnas, medidas, relaciones y fuentes
-4. Agrega el JSON directamente a `data/reportes.json`
+| Componente | Tecnologia |
+|------------|------------|
+| Backend | FastAPI, Python 3.10+ |
+| Base de datos | SQLite (WAL mode) |
+| Autenticacion | JWT (PyJWT) |
+| Frontend | React 19, TypeScript, Vite 6 |
+| Estilos | Tailwind CSS 3 |
+| Animaciones | GSAP 3 |
+| PDF | ReportLab, pypdf |
 
 ---
 
-## 📦 Requisitos
-
-- Python 3.10+
-- Windows 10/11 (el `start.bat` es para Windows; en Mac/Linux usa el Opción B)
+*Sistema desarrollado para uso interno. Acceso restringido a personal autorizado.*
