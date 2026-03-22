@@ -9,6 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body class="bg-surface-50 text-ink-900 font-sans text-sm antialiased">
+  <script>
+    // Apply dark mode immediately to prevent flash
+    (function(){
+      var s = localStorage.getItem('pbi_dark');
+      var dark = s !== null ? s === '1' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (dark) document.documentElement.classList.add('dark');
+    })();
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

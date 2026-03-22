@@ -21,7 +21,7 @@ export function TabColumnas({ doc }: { doc: Reporte }) {
             className={`px-3 py-1.5 rounded-xl text-2xs font-semibold border cursor-pointer transition-all ${
               filter === f
                 ? 'bg-ink-900 border-ink-900 text-white shadow-soft'
-                : 'border-surface-200 bg-white text-ink-400 hover:border-brand-400 hover:text-brand-600'
+                : 'border-surface-200 bg-surface-0 text-ink-400 hover:border-brand-400 hover:text-brand-600'
             }`}
           >
             {f || 'Todos'}

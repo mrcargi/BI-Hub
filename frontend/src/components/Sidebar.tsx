@@ -3,9 +3,25 @@ import gsap from 'gsap'
 import {
   LayoutDashboard, Box, Columns3, FunctionSquare, Database, FileText,
   ChevronLeft, ChevronRight, Plus, Upload, Menu, X, Search, ChevronDown,
-  Filter, Check, Bell,
+  Filter, Check, Bell, BookOpen,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+
+const AREA_COLORS = [
+  '#16a34a', '#2563eb', '#9333ea', '#d97706', '#dc2626',
+  '#0891b2', '#c026d3', '#059669', '#4f46e5', '#ea580c',
+  '#0d9488', '#7c3aed', '#ca8a04', '#e11d48', '#0284c7',
+]
+const areaColorMap = new Map<string, string>()
+function getAreaColor(area: string): string {
+  if (!area) return '#6b7280'
+  if (areaColorMap.has(area)) return areaColorMap.get(area)!
+  let hash = 0
+  for (let i = 0; i < area.length; i++) hash = ((hash << 5) - hash + area.charCodeAt(i)) | 0
+  const color = AREA_COLORS[Math.abs(hash) % AREA_COLORS.length]
+  areaColorMap.set(area, color)
+  return color
+}
 
 const NAV_ITEMS = [
   { key: 'resumen',  label: 'Resumen',     icon: LayoutDashboard },
@@ -15,6 +31,7 @@ const NAV_ITEMS = [
   { key: 'fuente',   label: 'Fuente',      icon: Database },
   { key: 'pdf',      label: 'Vista PDF',   icon: FileText },
   { key: 'notificaciones', label: 'Notificaciones', icon: Bell },
+  { key: 'guia',     label: 'Guia de Uso', icon: BookOpen },
 ]
 
 interface SidebarProps {
@@ -129,7 +146,7 @@ export function Sidebar({ onOpenJsonUpload, onOpenCreateModal, onOpenUserMenu, c
 
           {/* Dropdown */}
           {newMenuOpen && (
-            <div className="absolute left-3 right-3 top-full mt-1 bg-white border border-surface-200 rounded-xl shadow-float z-30 overflow-hidden">
+            <div className="absolute left-3 right-3 top-full mt-1 bg-surface-0 border border-surface-200 rounded-xl shadow-float z-30 overflow-hidden">
               <button
                 onClick={() => { onOpenCreateModal(); setNewMenuOpen(false); setMobileOpen(false) }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-ink-700 hover:bg-surface-50 transition-colors text-left"
@@ -212,7 +229,7 @@ export function Sidebar({ onOpenJsonUpload, onOpenCreateModal, onOpenUserMenu, c
                 </button>
 
                 {areaDropOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-surface-200 rounded-xl shadow-float z-30 overflow-hidden max-h-[280px] overflow-y-auto">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-surface-0 border border-surface-200 rounded-xl shadow-float z-30 overflow-hidden max-h-[280px] overflow-y-auto">
                     <button
                       onClick={() => { setDirFilter(''); setAreaDropOpen(false) }}
                       className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-left transition-colors ${
@@ -252,23 +269,27 @@ export function Sidebar({ onOpenJsonUpload, onOpenCreateModal, onOpenUserMenu, c
 
           {/* Report list */}
           <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-2">
-            {filtered.map(r => (
-              <button
-                key={r.id}
-                onClick={() => { setActiveId(r.id); if (activeTab === 'notificaciones') setActiveTab('resumen'); setMobileOpen(false) }}
-                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all mb-0.5 group ${
-                  activeId === r.id
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-ink-500 hover:bg-surface-50 hover:text-ink-700'
-                }`}
-                title={r.name}
-              >
-                <span className="text-sm shrink-0">{r.emoji || '📊'}</span>
-                <span className={`text-[12px] truncate ${activeId === r.id ? 'font-semibold' : 'font-medium'}`}>
-                  {r.name}
-                </span>
-              </button>
-            ))}
+            {filtered.map(r => {
+              const areaColor = getAreaColor(r.area)
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => { setActiveId(r.id); if (activeTab === 'notificaciones') setActiveTab('resumen'); setMobileOpen(false) }}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all mb-0.5 group border-l-[3px] ${
+                    activeId === r.id
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-ink-500 hover:bg-surface-50 hover:text-ink-700'
+                  }`}
+                  style={{ borderLeftColor: activeId === r.id ? areaColor : `${areaColor}40` }}
+                  title={`${r.name} — ${r.area}`}
+                >
+                  <FileText size={14} className={`shrink-0 transition-colors`} style={{ color: activeId === r.id ? areaColor : undefined }} />
+                  <span className={`text-[12px] truncate ${activeId === r.id ? 'font-semibold' : 'font-medium'}`}>
+                    {r.name}
+                  </span>
+                </button>
+              )
+            })}
             {filtered.length === 0 && (
               <p className="text-2xs text-ink-300 text-center py-4">Sin resultados</p>
             )}
@@ -347,7 +368,7 @@ export function Sidebar({ onOpenJsonUpload, onOpenCreateModal, onOpenUserMenu, c
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-white shadow-card flex items-center justify-center text-ink-700"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-surface-0 shadow-card flex items-center justify-center text-ink-700"
       >
         <Menu size={20} />
       </button>
@@ -361,7 +382,7 @@ export function Sidebar({ onOpenJsonUpload, onOpenCreateModal, onOpenUserMenu, c
 
       {/* Mobile sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] bg-white border-r border-surface-200 z-50 flex flex-col transition-transform duration-300 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] bg-surface-0 border-r border-surface-200 z-50 flex flex-col transition-transform duration-300 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <button
           onClick={() => setMobileOpen(false)}
@@ -375,7 +396,7 @@ export function Sidebar({ onOpenJsonUpload, onOpenCreateModal, onOpenUserMenu, c
       {/* Desktop sidebar */}
       <aside
         ref={sidebarRef}
-        className="hidden lg:flex flex-col h-screen bg-white border-r border-surface-200/80 shrink-0 overflow-hidden sticky top-0 z-10"
+        className="sidebar-root hidden lg:flex flex-col h-screen bg-surface-0 border-r border-surface-200/80 shrink-0 overflow-hidden sticky top-0 z-10"
         style={{ width: collapsed ? 72 : 300 }}
       >
         {sidebarContent}

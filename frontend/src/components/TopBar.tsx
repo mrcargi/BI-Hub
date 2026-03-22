@@ -18,8 +18,9 @@ interface TopBarProps {
 }
 
 export function TopBar({ onOpenUserMenu }: TopBarProps) {
-  const { reportes, activeId, activeTab, setActiveId, setActiveTab } = useStore()
+  const { reportes, activeId, activeTab, setActiveId, setActiveTab, user } = useStore()
   const doc = reportes.find(r => r.id === activeId)
+  const firstName = user?.name?.split(' ')[0] || 'Usuario'
 
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -30,6 +31,7 @@ export function TopBar({ onOpenUserMenu }: TopBarProps) {
     resumen: 'Resumen', modelo: 'Modelo', columnas: 'Columnas',
     medidas: 'Medidas DAX', fuente: 'Fuente', pdf: 'Vista PDF',
     notificaciones: 'Notificaciones',
+    guia: 'Guia de Uso',
   }
 
   // Load notifications
@@ -105,14 +107,12 @@ export function TopBar({ onOpenUserMenu }: TopBarProps) {
   }
 
   return (
-    <header className="h-12 border-b border-surface-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-20 flex items-center px-5 gap-3">
+    <header className="h-12 border-b border-surface-200/60 bg-surface-0/80 backdrop-blur-md sticky top-0 z-20 flex items-center px-5 gap-3">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs min-w-0">
-        <span className="text-ink-400 shrink-0">
-          {doc?.area || 'PBI Docs'}
-        </span>
         {doc && (
           <>
+            <span className="text-ink-400 shrink-0">{doc.area || 'PBI Docs'}</span>
             <span className="text-ink-300">›</span>
             <span className="font-semibold text-ink-900 truncate">{doc.name}</span>
             <span className="text-ink-300">›</span>
@@ -122,6 +122,9 @@ export function TopBar({ onOpenUserMenu }: TopBarProps) {
       </div>
 
       <div className="flex-1" />
+
+      {/* Welcome */}
+      <span className="text-xs text-ink-700 font-semibold shrink-0">Bienvenido/a, {firstName}</span>
 
       {/* Notifications */}
       <div className="relative" ref={dropRef}>
@@ -139,7 +142,7 @@ export function TopBar({ onOpenUserMenu }: TopBarProps) {
 
         {/* Dropdown */}
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-[380px] bg-white border border-surface-200 rounded-2xl shadow-float z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 w-[380px] bg-surface-0 border border-surface-200 rounded-2xl shadow-float z-50 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-surface-100">
               <div className="flex items-center gap-2">

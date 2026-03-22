@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
 import type { Reporte, Tabla } from '@/types'
+import { useStore } from '@/store/useStore'
 
 interface Props {
   doc: Reporte
@@ -24,18 +25,26 @@ interface LinkData {
   dir: string
 }
 
-const palette: Record<string, { fill: string; stroke: string; hdr: string; label: string; glow: string }> = {
+const paletteLight: Record<string, { fill: string; stroke: string; hdr: string; label: string; glow: string }> = {
   import: { fill: '#dcfce7', stroke: '#16a34a', hdr: '#16a34a', label: 'Import', glow: 'rgba(22,163,74,.2)' },
   calc:   { fill: '#dbeafe', stroke: '#2563eb', hdr: '#2563eb', label: 'Calculada', glow: 'rgba(37,99,235,.2)' },
   empty:  { fill: '#ede9fe', stroke: '#7c3aed', hdr: '#7c3aed', label: 'Medidas', glow: 'rgba(124,58,237,.2)' },
   param:  { fill: '#fef3c7', stroke: '#d97706', hdr: '#d97706', label: 'Parametro', glow: 'rgba(217,119,6,.2)' },
 }
-const getP = (type: string) => palette[type] || { fill: '#f4f4f5', stroke: '#71717a', hdr: '#71717a', label: 'Otro', glow: 'rgba(113,113,122,.2)' }
+const paletteDark: Record<string, { fill: string; stroke: string; hdr: string; label: string; glow: string }> = {
+  import: { fill: '#0a2618', stroke: '#22c55e', hdr: '#16a34a', label: 'Import', glow: 'rgba(34,197,94,.25)' },
+  calc:   { fill: '#0c1a30', stroke: '#60a5fa', hdr: '#2563eb', label: 'Calculada', glow: 'rgba(96,165,250,.25)' },
+  empty:  { fill: '#1a0f30', stroke: '#a78bfa', hdr: '#7c3aed', label: 'Medidas', glow: 'rgba(167,139,250,.25)' },
+  param:  { fill: '#1e1505', stroke: '#fbbf24', hdr: '#d97706', label: 'Parametro', glow: 'rgba(251,191,36,.25)' },
+}
+const defaultLight = { fill: '#f4f4f5', stroke: '#71717a', hdr: '#71717a', label: 'Otro', glow: 'rgba(113,113,122,.2)' }
+const defaultDark  = { fill: '#1e1e22', stroke: '#a1a1aa', hdr: '#71717a', label: 'Otro', glow: 'rgba(161,161,170,.2)' }
 const typeIcons: Record<string, string> = { import: '⬇', calc: 'ƒ', empty: '📐', param: '⚙' }
 
 export function RelationDiagram({ doc }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const animRef = useRef<number>(0)
+  const { darkMode } = useStore()
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -43,6 +52,18 @@ export function RelationDiagram({ doc }: Props) {
     container.innerHTML = ''
 
     if (animRef.current) cancelAnimationFrame(animRef.current)
+
+    const dark = darkMode
+    const getP = (type: string) => {
+      const pal = dark ? paletteDark : paletteLight
+      const def = dark ? defaultDark : defaultLight
+      return pal[type] || def
+    }
+    const textPrimary = dark ? '#f4f4f5' : '#18181b'
+    const textSecondary = dark ? '#a1a1aa' : '#52525b'
+    const dotColor = dark ? 'rgba(161,161,170,0.08)' : 'rgba(113,113,122,0.12)'
+    const dividerColor = dark ? 'rgba(161,161,170,0.15)' : 'rgba(113,113,122,0.2)'
+    const headerColor = dark ? 'rgba(161,161,170,0.35)' : 'rgba(113,113,122,0.5)'
 
     const tables = (doc.tables || []).filter(t => !t.name.includes('Local'))
     const relations = (doc.relations || []).filter(r => !r.fromTable.includes('Local') && !r.toTable.includes('Local'))
@@ -129,7 +150,7 @@ export function RelationDiagram({ doc }: Props) {
     // Dot grid
     defs.append('pattern').attr('id', 'dot-grid').attr('width', 24).attr('height', 24)
       .attr('patternUnits', 'userSpaceOnUse')
-      .append('circle').attr('cx', 12).attr('cy', 12).attr('r', 0.6).attr('fill', 'rgba(113,113,122,0.12)')
+      .append('circle').attr('cx', 12).attr('cy', 12).attr('r', 0.6).attr('fill', dotColor)
 
     // Zoom
     const g = svg.append('g')
@@ -140,12 +161,12 @@ export function RelationDiagram({ doc }: Props) {
     // Divider
     if (orphanTables.length > 0) {
       g.append('line').attr('x1', divX).attr('y1', 0).attr('x2', divX).attr('y2', H)
-        .attr('stroke', 'rgba(113,113,122,0.2)').attr('stroke-width', 1).attr('stroke-dasharray', '6 4')
+        .attr('stroke', dividerColor).attr('stroke-width', 1).attr('stroke-dasharray', '6 4')
       g.append('text').attr('x', leftW / 2).attr('y', 22).attr('text-anchor', 'middle')
-        .attr('font-size', 11).attr('font-weight', 600).attr('fill', 'rgba(113,113,122,0.5)')
+        .attr('font-size', 11).attr('font-weight', 600).attr('fill', headerColor)
         .attr('letter-spacing', '1.5px').attr('font-family', "'Geist Mono', monospace").text('TABLAS CON RELACION')
       g.append('text').attr('x', divX + rightW / 2).attr('y', 22).attr('text-anchor', 'middle')
-        .attr('font-size', 11).attr('font-weight', 600).attr('fill', 'rgba(113,113,122,0.5)')
+        .attr('font-size', 11).attr('font-weight', 600).attr('fill', headerColor)
         .attr('letter-spacing', '1.5px').attr('font-family', "'Geist Mono', monospace").text('SIN RELACION')
     }
 
@@ -218,12 +239,12 @@ export function RelationDiagram({ doc }: Props) {
 
     // Table name
     node.append('text').attr('text-anchor', 'middle').attr('y', -NH / 2 + 38)
-      .attr('font-size', 12).attr('font-weight', 700).attr('fill', '#18181b')
+      .attr('font-size', 12).attr('font-weight', 700).attr('fill', textPrimary)
       .text(d => d.name.length > 20 ? d.name.slice(0, 19) + '…' : d.name)
 
     // Meta
     node.append('text').attr('text-anchor', 'middle').attr('y', -NH / 2 + 54)
-      .attr('font-size', 9.5).attr('fill', '#52525b')
+      .attr('font-size', 9.5).attr('fill', textSecondary)
       .attr('font-family', "'Geist Mono', monospace")
       .text(d => `${d.cols} cols · ${d.rows || '—'} filas`)
 
@@ -275,12 +296,12 @@ export function RelationDiagram({ doc }: Props) {
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current)
     }
-  }, [doc.id, doc.tables, doc.relations])
+  }, [doc.id, doc.tables, doc.relations, darkMode])
 
   return (
     <div
       ref={containerRef}
-      className="w-full bg-zinc-50 overflow-hidden"
+      className="w-full bg-surface-50 overflow-hidden"
       style={{ height: 620, cursor: 'grab' }}
     />
   )

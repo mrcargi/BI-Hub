@@ -38,7 +38,7 @@ export function Modal({ open, onClose, children, maxWidth = 'max-w-[480px]' }: M
     >
       <div
         ref={panelRef}
-        className={`bg-white border border-surface-200/60 rounded-2xl p-6 w-full ${maxWidth} shadow-float translate-y-2 opacity-0 scale-[0.98]`}
+        className={`bg-surface-0 border border-surface-200/60 rounded-2xl p-6 w-full ${maxWidth} shadow-float translate-y-2 opacity-0 scale-[0.98]`}
       >
         {children}
       </div>

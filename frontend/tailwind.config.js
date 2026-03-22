@@ -1,35 +1,46 @@
 /** @type {import('tailwindcss').Config} */
+
+function cv(name) {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgb(var(${name}) / ${opacityValue})`
+    }
+    return `rgb(var(${name}))`
+  }
+}
+
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
         brand: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
+          50:  cv('--color-brand-50'),
+          100: cv('--color-brand-100'),
+          200: cv('--color-brand-200'),
+          300: cv('--color-brand-300'),
+          400: cv('--color-brand-400'),
+          500: cv('--color-brand-500'),
+          600: cv('--color-brand-600'),
+          700: cv('--color-brand-700'),
+          800: cv('--color-brand-800'),
+          900: cv('--color-brand-900'),
+          950: cv('--color-brand-950'),
         },
         surface: {
-          0:   '#ffffff',
-          50:  '#fafaf9',
-          100: '#f5f5f4',
-          200: '#e7e5e4',
-          300: '#d6d3d1',
+          0:   cv('--color-surface-0'),
+          50:  cv('--color-surface-50'),
+          100: cv('--color-surface-100'),
+          200: cv('--color-surface-200'),
+          300: cv('--color-surface-300'),
         },
         ink: {
-          900: '#1c1917',
-          700: '#44403c',
-          500: '#78716c',
-          400: '#a8a29e',
-          300: '#d6d3d1',
+          900: cv('--color-ink-900'),
+          700: cv('--color-ink-700'),
+          500: cv('--color-ink-500'),
+          400: cv('--color-ink-400'),
+          300: cv('--color-ink-300'),
         },
       },
       fontFamily: {
@@ -37,10 +48,10 @@ export default {
         mono: ['"JetBrains Mono"', 'Geist Mono', 'monospace'],
       },
       boxShadow: {
-        soft:   '0 1px 3px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.03)',
-        card:   '0 2px 8px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.03)',
-        float:  '0 4px 16px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.04)',
-        glow:   '0 0 20px rgba(22,163,74,.12)',
+        soft:   'var(--shadow-soft)',
+        card:   'var(--shadow-card)',
+        float:  'var(--shadow-float)',
+        glow:   'var(--shadow-glow)',
       },
       borderRadius: {
         xl:  '12px',

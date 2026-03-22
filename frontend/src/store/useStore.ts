@@ -29,6 +29,10 @@ export interface AppState {
   setSearchQ: (q: string) => void
   setColFilter: (f: string) => void
 
+  // Theme
+  darkMode: boolean
+  toggleDarkMode: () => void
+
   // Toast
   toast: { msg: string; icon: string } | null
   showToast: (msg: string, icon?: string) => void

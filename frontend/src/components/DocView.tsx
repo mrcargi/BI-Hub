@@ -10,6 +10,7 @@ import { TabMedidas } from '@/components/tabs/TabMedidas'
 import { TabFuente } from '@/components/tabs/TabFuente'
 import { TabPdf } from '@/components/tabs/TabPdf'
 import { TabNotificaciones } from '@/components/tabs/TabNotificaciones'
+import { TabGuia } from '@/components/tabs/TabGuia'
 
 interface DocViewProps {
   onEdit: (id: string) => void
@@ -55,6 +56,9 @@ export function DocView({ onEdit, onDelete }: DocViewProps) {
   if (activeTab === 'notificaciones') {
     return <TabNotificaciones />
   }
+  if (activeTab === 'guia') {
+    return <div className="p-4 lg:p-5"><TabGuia /></div>
+  }
 
   if (!doc) {
     return (
@@ -79,7 +83,7 @@ export function DocView({ onEdit, onDelete }: DocViewProps) {
         {user?.role === 'admin' && (
           <button
             onClick={() => onDelete(doc.id)}
-            className="btn hover:!border-red-300 hover:!text-red-600 hover:!bg-red-50"
+            className="btn hover:!border-red-300 hover:!text-red-600 hover:!bg-red-50 dark:hover:!border-red-800 dark:hover:!bg-red-950/30"
           >
             <Trash2 size={14} /> Eliminar
           </button>

@@ -33,7 +33,7 @@ export function TabFuente({ doc }: { doc: Reporte }) {
         </div>
         <div className="card-body">
           {/* Data flow visual */}
-          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-surface-50 to-white rounded-xl border border-surface-100 overflow-x-auto">
+          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-surface-50 to-surface-0 rounded-xl border border-surface-100 overflow-x-auto">
             {/* Source */}
             <div className="flex flex-col items-center gap-1.5 shrink-0">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${connType.bg}`}>

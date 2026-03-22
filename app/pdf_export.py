@@ -195,132 +195,253 @@ class SectionHeader(Flowable):
 
 # ── Cover Page ───────────────────────────────────────────────
 def _draw_cover(canvas, doc_data):
-    """Draw a professional cover page with green gradient."""
+    """Draw a professional, centered cover page for executive presentation."""
+    from reportlab.lib.utils import ImageReader
+
     c = canvas
     w, h = LETTER
+    cx = w / 2  # center x
 
-    # Full green gradient background (simulated with rectangles)
-    steps = 40
+    # Full green gradient background (darker, more formal)
+    steps = 50
     for i in range(steps):
         ratio = i / steps
-        r = 0.078 + ratio * 0.055  # #14 -> #22
-        g = 0.325 + ratio * 0.15   # #53 -> #c5
-        b = 0.176 + ratio * 0.19   # #2d -> #5e
+        r = 0.059 + ratio * 0.06
+        g = 0.298 + ratio * 0.12
+        b = 0.165 + ratio * 0.16
         color = Color(r, g, b)
         c.setFillColor(color)
         y = h - (h * (i + 1) / steps)
         c.rect(0, y, w, h / steps + 1, fill=1, stroke=0)
 
-    # Decorative circle (top right)
-    c.setFillColor(Color(1, 1, 1, 0.04))
-    c.circle(w - 80, h - 80, 180, fill=1, stroke=0)
-    c.circle(w - 80, h - 80, 120, fill=1, stroke=0)
-
-    # Decorative circle (bottom left)
+    # Subtle decorative circles
     c.setFillColor(Color(1, 1, 1, 0.03))
-    c.circle(60, 100, 140, fill=1, stroke=0)
+    c.circle(w - 60, h - 60, 200, fill=1, stroke=0)
+    c.circle(60, 80, 160, fill=1, stroke=0)
 
-    # Top bar — "RESUMEN EJECUTIVO"
-    c.setFillColor(Color(1, 1, 1, 0.15))
-    c.roundRect(50, h - 90, 160, 24, 12, fill=1, stroke=0)
-    c.setFillColor(white)
-    c.setFont('Helvetica-Bold', 8)
-    c.drawString(66, h - 83, 'RESUMEN EJECUTIVO')
+    # Thin decorative line across the page
+    c.setStrokeColor(Color(1, 1, 1, 0.08))
+    c.setLineWidth(0.5)
+    c.line(80, h / 2 + 140, w - 80, h / 2 + 140)
+    c.line(80, h / 2 - 120, w - 80, h / 2 - 120)
 
-    # NADRO branding
-    c.setFont('Helvetica-Bold', 10)
-    c.setFillColor(Color(1, 1, 1, 0.7))
-    c.drawString(50, h - 130, 'PBI Docs · NADRO Analytics')
+    # Reset canvas transparency state — decorative elements above
+    # set alpha to 0.03/0.08 which persists for drawImage calls
+    c.saveState()
+    c.setFillColor(Color(1, 1, 1, 1))  # fully opaque
 
-    # Report name
+    # ── Logos (NADRO white on green × X-Data original on green) ──
+    from PIL import Image as PILImage
+
+    static_dir = Path(__file__).resolve().parent.parent / 'static' / 'img'
+    logo_y = h - 130
+    gap = 16
+    sep_w = 24
+    # Background green to composite onto (matches gradient ~top area)
+    bg_rgb = (20, 83, 45)
+
+    def _logo_on_green(img_path, make_white=False):
+        """Flatten logo to solid RGB on green background."""
+        raw = PILImage.open(img_path)
+        # Convert palette/other modes to RGBA properly
+        img = raw.convert('RGBA')
+        # Create green background, composite, then convert to RGB
+        # This handles all alpha blending correctly
+        green_bg = PILImage.new('RGBA', img.size, (*bg_rgb, 255))
+        if make_white:
+            # Turn all visible pixels white before compositing
+            white_img = PILImage.new('RGBA', img.size, (0, 0, 0, 0))
+            wpx = white_img.load()
+            spx = img.load()
+            for yp in range(img.height):
+                for xp in range(img.width):
+                    a = spx[xp, yp][3]
+                    if a > 10:
+                        wpx[xp, yp] = (255, 255, 255, 255)
+            result = PILImage.alpha_composite(green_bg, white_img)
+        else:
+            # Make semi-transparent pixels fully opaque
+            opaque_img = img.copy()
+            opx = opaque_img.load()
+            for yp in range(img.height):
+                for xp in range(img.width):
+                    pr, pg, pb, a = opx[xp, yp]
+                    if a > 10:
+                        opx[xp, yp] = (pr, pg, pb, 255)
+                    else:
+                        opx[xp, yp] = (0, 0, 0, 0)
+            result = PILImage.alpha_composite(green_bg, opaque_img)
+        rgb = result.convert('RGB')
+        buf = io.BytesIO()
+        rgb.save(buf, format='JPEG', quality=95)
+        buf.seek(0)
+        return ImageReader(buf)
+
+    # Load NADRO logo (white version composited on green)
+    nadro_img, nadro_w, nadro_h = None, 0, 0
+    try:
+        nadro_path = static_dir / 'nadro-logo.png'
+        if nadro_path.exists():
+            nadro_img = _logo_on_green(nadro_path, make_white=True)
+            nadro_h = 40
+            iw, ih = nadro_img.getSize()
+            nadro_w = nadro_h * iw / ih
+    except Exception:
+        pass
+
+    # Load X-Data logo (original colors composited on green)
+    xdata_img, xdata_w, xdata_h = None, 0, 0
+    try:
+        xdata_path = static_dir / 'xdata-logo-hd.png'
+        if not xdata_path.exists():
+            xdata_path = static_dir / 'xdata-logo.png'
+        if xdata_path.exists():
+            xdata_img = _logo_on_green(xdata_path, make_white=False)
+            xdata_h = 50
+            iw, ih = xdata_img.getSize()
+            xdata_w = xdata_h * iw / ih
+    except Exception:
+        pass
+
+    total_w = nadro_w + gap + sep_w + gap + xdata_w
+    start_x = cx - total_w / 2
+    row_h = max(nadro_h, xdata_h)
+
+    # Draw NADRO logo (solid white on green)
+    if nadro_img:
+        ny = logo_y + (row_h - nadro_h) / 2
+        c.drawImage(nadro_img, start_x, ny,
+                    nadro_w, nadro_h)
+
+    # × separator
+    c.setFont('Helvetica', 20)
+    c.setFillColor(Color(1, 1, 1, 0.4))
+    sep_x = start_x + nadro_w + gap + sep_w / 2
+    c.drawCentredString(sep_x, logo_y + row_h / 2 - 6, '×')
+
+    # Draw X-Data logo (original colors on green)
+    # Reset alpha after × separator set it to 0.4
+    c.setFillColor(Color(1, 1, 1, 1))
+    if xdata_img:
+        xd_x = start_x + nadro_w + gap + sep_w + gap
+        xd_y = logo_y + (row_h - xdata_h) / 2
+        c.drawImage(xdata_img, xd_x, xd_y,
+                    xdata_w, xdata_h)
+
+    c.restoreState()  # restore after logo drawing
+
+    # ── "DOCUMENTACIÓN DEL REPORTE" label ──
+    c.setFont('Helvetica-Bold', 9)
+    c.setFillColor(Color(1, 1, 1, 0.5))
+    c.drawCentredString(cx, h / 2 + 110, 'DOCUMENTACIÓN DEL REPORTE')
+
+    # ── Report Name (centered, large) ──
     name = doc_data.get('name', 'Reporte')
-    emoji = doc_data.get('emoji', '')
-    full_title = f'{emoji}  {name}' if emoji else name
-
-    c.setFont('Helvetica-Bold', 32)
     c.setFillColor(white)
-    # Word wrap title if too long
-    max_w = w - 100
-    if c.stringWidth(full_title, 'Helvetica-Bold', 32) > max_w:
-        words = full_title.split()
-        lines = []
-        current = ''
+    max_w = w - 140
+
+    # Determine font size that fits
+    font_size = 34
+    while font_size > 18 and c.stringWidth(name, 'Helvetica-Bold', font_size) > max_w:
+        font_size -= 2
+
+    c.setFont('Helvetica-Bold', font_size)
+    # Word wrap if still too long
+    if c.stringWidth(name, 'Helvetica-Bold', font_size) > max_w:
+        words = name.split()
+        lines, current = [], ''
         for word in words:
             test = f'{current} {word}'.strip()
-            if c.stringWidth(test, 'Helvetica-Bold', 32) > max_w:
+            if c.stringWidth(test, 'Helvetica-Bold', font_size) > max_w:
                 lines.append(current)
                 current = word
             else:
                 current = test
         if current:
             lines.append(current)
-        y_start = h // 2 + 60
+        y_start = h / 2 + 80
         for i, line in enumerate(lines):
-            c.drawString(50, y_start - i * 42, line)
+            c.drawCentredString(cx, y_start - i * (font_size + 8), line)
     else:
-        c.drawString(50, h // 2 + 60, full_title)
+        c.drawCentredString(cx, h / 2 + 80, name)
 
-    # Description
+    # ── Description (centered) ──
     desc = doc_data.get('desc', '')
     if desc:
-        c.setFont('Helvetica', 11)
-        c.setFillColor(Color(1, 1, 1, 0.6))
-        # Truncate long descriptions
+        c.setFont('Helvetica', 10)
+        c.setFillColor(Color(1, 1, 1, 0.55))
         if len(desc) > 200:
             desc = desc[:197] + '...'
-        # Simple word wrap
         words = desc.split()
-        lines = []
-        current = ''
+        lines, current = [], ''
         for word in words:
             test = f'{current} {word}'.strip()
-            if c.stringWidth(test, 'Helvetica', 11) > max_w:
+            if c.stringWidth(test, 'Helvetica', 10) > max_w:
                 lines.append(current)
                 current = word
             else:
                 current = test
         if current:
             lines.append(current)
-        y_desc = h // 2 + 10
+        y_desc = h / 2 + 30
         for i, line in enumerate(lines[:4]):
-            c.drawString(50, y_desc - i * 16, line)
+            c.drawCentredString(cx, y_desc - i * 15, line)
 
-    # Bottom metadata pills
-    meta_y = 120
-    x = 50
-
-    items = []
+    # ── Metadata table (centered, clean) ──
+    meta_items = []
     if doc_data.get('area'):
-        items.append(f"Área: {doc_data['area']}")
+        meta_items.append(('Área', doc_data['area']))
     if doc_data.get('direccion'):
-        items.append(f"Dir: {doc_data['direccion']}")
+        meta_items.append(('Dirección', doc_data['direccion']))
     if doc_data.get('responsable'):
-        items.append(f"Resp: {doc_data['responsable']}")
+        meta_items.append(('Responsable', doc_data['responsable']))
     estado = doc_data.get('estado', 'activo')
-    items.append(f"Estado: {estado.upper()}")
+    meta_items.append(('Estado', estado.upper()))
     if doc_data.get('compat'):
-        items.append(f"PBI {doc_data['compat']}")
+        meta_items.append(('Compatibilidad', f"PBI {doc_data['compat']}"))
 
-    c.setFont('Helvetica', 8)
-    for item in items:
-        tw = c.stringWidth(item, 'Helvetica', 8) + 16
-        c.setFillColor(Color(1, 1, 1, 0.12))
-        c.roundRect(x, meta_y, tw, 20, 10, fill=1, stroke=0)
-        c.setFillColor(Color(1, 1, 1, 0.8))
-        c.drawString(x + 8, meta_y + 6, item)
-        x += tw + 8
+    if meta_items:
+        row_h = 18
+        col_w = 200
+        table_h = len(meta_items) * row_h
+        table_y = h / 2 - 150
+        table_x = cx - col_w  # total width = col_w * 2
 
-    # Date
-    c.setFont('Helvetica', 9)
+        # Table background
+        c.setFillColor(Color(1, 1, 1, 0.06))
+        c.roundRect(table_x - 10, table_y - 6, col_w * 2 + 20, table_h + 12, 6, fill=1, stroke=0)
+
+        for i, (key, val) in enumerate(meta_items):
+            y = table_y + table_h - (i + 1) * row_h + 5
+            c.setFont('Helvetica', 8.5)
+            c.setFillColor(Color(1, 1, 1, 0.45))
+            c.drawRightString(cx - 10, y, key)
+            c.setFont('Helvetica-Bold', 8.5)
+            c.setFillColor(Color(1, 1, 1, 0.85))
+            c.drawString(cx + 10, y, val)
+
+    # ── Footer area ──
+    # Thin separator
+    c.setStrokeColor(Color(1, 1, 1, 0.1))
+    c.setLineWidth(0.5)
+    c.line(100, 80, w - 100, 80)
+
+    # Date centered
+    c.setFont('Helvetica', 8.5)
     c.setFillColor(Color(1, 1, 1, 0.4))
-    c.drawString(50, 70, f'Generado: {datetime.now().strftime("%d de %B de %Y · %H:%M")}')
+    c.drawCentredString(cx, 60, f'Generado el {datetime.now().strftime("%d de %B de %Y · %H:%M")}')
 
-    # Tags
+    # Tags centered
     tags = doc_data.get('tags', [])
     if tags:
-        c.setFont('Helvetica', 8)
-        c.setFillColor(Color(1, 1, 1, 0.5))
-        c.drawString(50, 50, '  '.join([f'#{t}' for t in tags]))
+        c.setFont('Helvetica', 7.5)
+        c.setFillColor(Color(1, 1, 1, 0.35))
+        c.drawCentredString(cx, 42, '  '.join([f'#{t}' for t in tags]))
+
+    # Platform label at very bottom
+    c.setFont('Helvetica', 7)
+    c.setFillColor(Color(1, 1, 1, 0.25))
+    c.drawCentredString(cx, 22, 'PBI Docs · Plataforma de Documentación')
 
 
 # ── Page Header/Footer ───────────────────────────────────────
@@ -724,7 +845,7 @@ def generate_report_pdf(doc: dict) -> bytes:
 
     # ═══════════════════════════════════════════════════════════
     #  BUILD
-    # ═══════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════���═══════════════════
     def first_page(canvas, doc_template):
         _draw_cover(canvas, doc)
         canvas.showPage()

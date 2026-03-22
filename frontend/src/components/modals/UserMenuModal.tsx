@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LogOut, Users, Lock } from 'lucide-react'
+import { LogOut, Users, Lock, Moon, Sun } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/useStore'
 import { apiFetch } from '@/api/client'
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function UserMenuModal({ open, onClose, onOpenUsers }: Props) {
-  const { user, logout, showToast } = useStore()
+  const { user, logout, showToast, darkMode, toggleDarkMode } = useStore()
   const [newPass, setNewPass] = useState('')
 
   async function savePassword() {
@@ -39,6 +39,22 @@ export function UserMenuModal({ open, onClose, onOpenUsers }: Props) {
           <h2 className="text-sm font-bold text-ink-900">{user?.name}</h2>
           <p className="text-2xs text-ink-400">{user?.email} · <span className="capitalize font-medium">{user?.role}</span></p>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-4 py-2.5 border-b border-surface-200">
+        <label className="flex items-center gap-2 text-xs font-semibold text-ink-700">
+          {darkMode ? <Moon size={14} /> : <Sun size={14} />}
+          Modo oscuro
+        </label>
+        <button
+          type="button"
+          onClick={toggleDarkMode}
+          className={`w-11 h-6 rounded-full transition-colors duration-200 flex items-center cursor-pointer ${
+            darkMode ? 'bg-brand-500 justify-end' : 'bg-gray-300 justify-start'
+          }`}
+        >
+          <span className="w-5 h-5 rounded-full bg-white shadow-md mx-0.5" />
+        </button>
       </div>
 
       <div className="mb-4">
